@@ -1,0 +1,159 @@
+services:
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - .env
+    volumes:
+      - ./caddyfile:/etc/caddy/Caddyfile:ro
+      - ./chatn-backend:/var/www:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      next:
+        condition: service_started
+      laravel:
+        condition: service_healthy
+      reverb:
+        condition: service_healthy
+      livekit:
+        condition: service_started
+
+  next:
+    build:
+      context: ./chatn-frontend
+      dockerfile: dockerfile.nextJS
+    restart: unless-stopped
+    command: pnpm dev
+    volumes:
+      - ./chatn-frontend:/app
+      - /app/node_modules
+    expose:
+      - "3000"
+
+  laravel:
+    build:
+      context: ./chatn-backend
+      dockerfile: dockerfile.laravel
+    restart: unless-stopped
+    volumes:
+      - ./chatn-backend:/var/www
+      - caddy_data:/caddy-data:ro
+      - ca_certs:/ca-certs:ro
+    expose:
+      - "9000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "php", "artisan", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    ports:
+      - "3310:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: chatn
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  reverb:
+    build:
+      context: ./chatn-backend
+      dockerfile: dockerfile.laravel
+    restart: unless-stopped
+    command: php artisan reverb:start --debug
+    volumes:
+      - ./chatn-backend:/var/www
+    expose:
+      - "8080"
+    depends_on:
+      laravel:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "artisan", "reverb:start", "--help"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  worker:
+    build:
+      context: ./chatn-backend
+      dockerfile: dockerfile.laravel
+    restart: unless-stopped
+    command: php artisan queue:work --tries=3 --timeout=90
+    volumes:
+      - ./chatn-backend:/var/www
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      reverb:
+        condition: service_healthy
+
+  livekit:
+    image: livekit/livekit-server:latest
+    restart: unless-stopped
+    command: --config /etc/livekit/livekit.yaml --node-ip 192.168.1.117
+    volumes:
+      - ./livekit.yaml:/etc/livekit/livekit.yaml
+    ports:
+      - "7880:7880"
+      - "7881:7881/tcp"
+      - "50000-50100:50000-50100/udp"
+
+  ca-installer:
+    image: alpine:latest
+    user: "0:0"
+    volumes:
+      - caddy_data:/caddy-data:ro
+      - ca_certs:/target-certs
+    command: >
+      sh -c "
+        echo 'Installing Caddy Root CA...';
+
+        if [ ! -f /caddy-data/caddy/pki/authorities/local/root.crt ]; then
+          echo 'ERROR: Caddy Root CA not found!';
+          exit 1;
+        fi;
+
+        cp /caddy-data/caddy/pki/authorities/local/root.crt /target-certs/caddy-root.crt;
+
+        echo 'Caddy Root CA copied successfully!';
+      "
+
+volumes:
+  mysql_data:
+  caddy_data:
+  caddy_config:
+  ca_certs:

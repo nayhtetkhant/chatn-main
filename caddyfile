@@ -1,0 +1,25 @@
+{
+    local_certs
+}
+
+# Next.js Frontend
+app.{$DOMAIN_NAME}.nip.io {
+    reverse_proxy next:3000
+}
+
+# Laravel Backend API
+api.{$DOMAIN_NAME}.nip.io {
+    root * /var/www/public
+    php_fastcgi laravel:9000
+    file_server
+}
+
+# Reverb WebSockets
+ws.{$DOMAIN_NAME}.nip.io {
+    reverse_proxy reverb:8080
+}
+
+# LiveKit Server
+live.{$DOMAIN_NAME}.nip.io {
+    reverse_proxy livekit:7880
+}
