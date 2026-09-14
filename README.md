@@ -67,32 +67,138 @@ docker compose up --build
 
 ### API Request Flow
 
-```text
-Browser
-   │
-   │ HTTPS
-   ▼
-Caddy (app.domain)
-   │
-   ▼
-Next.js BFF
-   │
-   │ Axios
-   ▼
-Caddy (api.domain)
-   │
-   ▼
-Laravel API
-   │
-   ├──→ Eloquent ORM ──→ MySQL
-   │
-   └──→ Redis
+```
+                         Browser
+                            │
+                         HTTPS
+                            ▼
+                    Caddy (app.domain)
+                            │
+                            ▼
+                       Next.js BFF
+                            │
+                          Axios
+                            ▼
+                    Caddy (api.domain)
+                            │
+                            ▼
+                       Laravel API
+                       /    |    \
+                      /     |     \
+                     ▼      ▼      ▼
+                Eloquent  Redis   Queue
+                   │                │
+                   ▼                ▼
+                 MySQL            Reverb
+                                      │
+                                      ▼
+                                   Browser
 ```
 
 ### Chat Communication
 
+                   SENDER
+                       │
+                 Send Message
+                       │
+                       ▼
+              TanStack Mutation
+                       │
+                       ▼
+                  Next.js BFF
+                       │
+                     Axios
+                       │
+                       ▼
+                 Laravel API
+                       │
+                       ▼
+                Message Table
+                       │
+                       ▼
+               Broadcast Event
+                       │
+                       ▼
+                 Laravel Reverb
+                       │
+             ┌─────────┴─────────┐
+             ▼                   ▼
+         RECEIVER A          RECEIVER B
+             │                   │
+        Laravel Echo        Laravel Echo
+             │                   │
+      Subscribe Channel     Subscribe Channel
+             │                   │
+       Listen Event          Listen Event
+             │                   │
+             ▼                   ▼
+       Message Received    Message Received
+             │                   │
+             ▼                   ▼
+       TanStack Query      TanStack Query
+             │                   │
+             ▼                   ▼
+             UI                  UI
+
 ### Video Communication
 
+```call initialization
+                         CALL SIGNALING
+                              │
+Caller                        │
+  │                           │
+  │ Call Button               │
+  ▼                           │
+TanStack Mutation             │
+  │                           │
+  ▼                           │
+Next.js BFF                   │
+  │                           │
+  ▼                           │
+Laravel API ──────→ Call Event
+                         │
+                         ▼
+                   Laravel Reverb
+                         │
+                         ▼
+                    Callee Browser
+                         │
+                    Accept Call
+                         │
+                         ▼
+                    Laravel API
+                         │
+                         ▼
+                 Validate Call State
+                         │
+                         ▼
+                       Redis
+                         │
+                         ▼
+                LiveKit Server SDK
+                         │
+                    Create Room
+                    Create Token
+                         │
+                         ▼
+                   LiveKit Server
+                         │
+                         ▼
+                    Broadcast Event
+                         │
+              ┌──────────┴──────────┐
+              ▼                     ▼
+          Caller                  Callee
+          Browser                 Browser
+              │                     │
+              └──────────┬──────────┘
+                         ▼
+                    Zustand Store
+                         │
+                         ▼
+                      CallView
+
+```
 
 
 ## Tech Stack Explanation
