@@ -142,7 +142,9 @@ docker compose up --build
 
 ### Video Communication
 
-```call initialization
+***call initialization***
+
+```
                          CALL SIGNALING
                               │
 Caller                        │
