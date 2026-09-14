@@ -440,4 +440,123 @@ experience with Docker and multi-container application setup.
 
 
 ## Challenges & Solutions
+### 1. Scalable Chat Participant Relationships
 
+**Challenge:**  
+The initial chat schema used a one-to-many relationship for chat participants, which was restrictive for supporting group conversations.
+
+**Solution:**  
+Refactored the relationship into a many-to-many structure using a dedicated chat participants relationship.
+
+**Result:**  
+The same chat architecture can support both one-to-one and multi-user group conversations while keeping the database structure flexible.
+
+---
+
+### 2. Efficient Message Pagination & Scroll Management
+
+**Challenge:**  
+Traditional skip/offset pagination can become inefficient as the message history grows. In addition, loading older messages at the top of a chat can cause the user's scroll position to jump.
+
+**Solution:**  
+Implemented cursor-based pagination with TanStack Query. The message container uses `useRef` and scroll events to detect when the user reaches the top of the conversation and automatically fetch older messages.
+
+To preserve the user's position, the previous `scrollHeight` is stored before fetching additional messages. After new messages are inserted, the height difference is calculated and applied to maintain the previous visual position.
+
+**Result:**  
+Users can load older messages seamlessly without noticeable scroll-position jumps.
+
+---
+
+### 3. Local HTTPS for WebSocket & Media Features
+
+**Challenge:**  
+Browser media APIs such as camera and microphone access require a secure context. Running the application directly over HTTP made local testing of real-time media features difficult.
+
+**Solution:**  
+Configured Caddy as a reverse proxy and used `.nip.io` subdomains to provide local HTTPS endpoints for the application.
+
+**Result:**  
+The application can be tested locally with HTTPS while using browser camera, microphone, WebSocket, and LiveKit features.
+
+---
+
+### 4. Multi-Container Development Environment
+
+**Challenge:**  
+The application depends on multiple services, including Next.js, Laravel, Reverb, Redis, MySQL, and a queue worker. Managing these services independently would make local development more complex.
+
+**Solution:**  
+Containerized the services using Docker and Docker Compose. Each service runs in its own container and communicates through the Docker network, while Caddy handles reverse proxying and local HTTPS.
+
+**Result:**  
+The complete application can be started and managed as a consistent multi-container development environment.
+
+---
+
+### 5. WebSocket Authentication & Lifecycle Management
+
+**Challenge:**  
+Integrating Laravel Reverb with private channels introduced authentication and event-handling issues. Additional care was required to prevent stale channel subscriptions when React components were unmounted.
+
+**Solution:**  
+Debugged the Reverb authentication flow and event configuration. On the frontend, Laravel Echo channel subscriptions are explicitly cleaned up with `echo.leave()` when components unmount.
+
+**Result:**  
+Private WebSocket channels can be used reliably for chat, presence, and call-related events while preventing unnecessary subscriptions and stale connections.
+
+---
+
+### 6. P2P Mesh Limitations for Group Video Calls
+
+**Challenge:**  
+The initial video implementation used P2P WebRTC. While suitable for one-to-one communication, a mesh architecture requires each participant to maintain direct connections with other participants. As the number of participants increases, bandwidth and connection-management complexity also increase.
+
+**Solution:**  
+Replaced the P2P mesh architecture with LiveKit's SFU architecture.
+
+Instead of establishing direct connections between every participant, each participant publishes their media tracks to the SFU, which forwards the required tracks to other participants.
+
+**Result:**  
+The video architecture became more suitable for multi-user conferencing while reducing the complexity of managing multiple direct peer connections.
+
+---
+
+### 7. Self-Hosted LiveKit Integration
+
+**Challenge:**  
+Self-hosting LiveKit introduced infrastructure and authentication issues during local development, including JWT secret requirements and SSL certificate trust problems when communicating with the LiveKit server.
+
+**Solution:**  
+Configured the self-hosted LiveKit server and integrated the LiveKit Server SDK with Laravel for room creation and access-token generation. Local SSL configuration was also adjusted so the backend could communicate with the LiveKit server.
+
+**Result:**  
+The backend can dynamically create rooms and generate authenticated LiveKit access tokens for call participants.
+
+---
+
+### 8. Real-Time Call Signaling
+
+**Challenge:**  
+LiveKit is responsible for the media plane, but the application still required an application-level signaling mechanism for call invitations and call state changes.
+
+**Solution:**  
+Used Laravel Reverb as the signaling layer for events such as call invitation, acceptance, and rejection.
+
+The architecture separates signaling from media communication:
+
+```text
+Laravel Reverb
+    │
+    └── Signaling
+        ├── Call Invitation
+        ├── Accept
+        └── Reject
+
+
+LiveKit
+    │
+    └── Media Plane
+        ├── Audio
+        ├── Video
+        └── Remote Media Tracks
