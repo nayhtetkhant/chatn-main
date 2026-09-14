@@ -71,8 +71,6 @@ The component-based architecture makes it easier to organize, reuse, and maintai
 
 Next.js is used as the frontend framework to provide features such as server-side rendering and the Backend-for-Frontend (BFF) layer.
 
-The BFF layer provides a controlled API boundary between the browser and the Laravel backend, so the browser communicates with the frontend application rather than directly exposing the backend API endpoint.
-
 ### Axios
 
 Axios is used as the HTTP client for communication between the frontend/BFF layer and the backend API.
@@ -133,3 +131,19 @@ With an SFU, each participant joins a room and publishes their audio/video track
 Each client publishes its own media to the SFU once, while subscribing to the media tracks it needs from the room.
 
 This provides a more suitable architecture for multi-user conferencing by reducing the number of direct peer connections maintained by each client.
+### Why BFF?
+
+The BFF layer provides a controlled API boundary between the browser
+and the Laravel backend.
+
+Instead of communicating directly with the Laravel API, the browser
+sends requests to the Next.js BFF layer, which then communicates with
+the Laravel backend.
+
+```text
+Browser
+   ↓
+Next.js BFF Endpoint
+   ↓
+Laravel API Endpoint
+```
