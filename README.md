@@ -7,6 +7,19 @@ The application combines WebSocket-based real-time messaging with
 an SFU-based video conferencing architecture to provide real-time
 communication between multiple users.
 
+## features
+
+- User authentication
+- Active chat reordering based on latest message activity
+- Friends contact
+- Both p2p and group chat
+- Real-time user online/offline statement
+- Real-time messaging
+- Cursor-based pagination
+- Real-time video conferencing
+- Room-base video conferencing
+- Local https /SSL
+
 ## Tech Stack
 
 ### Frontend
@@ -102,6 +115,9 @@ operations triggered them during a request lifecycle.
 **Tweakcn** is used to customize and manage the application's visual theme and design system.
 
 **DiceBear** is used to generate consistent user avatars for users who do not have a custom profile image.
+
+
+## Engineering Decisions
 
 ### Why SFU?
 
