@@ -44,6 +44,10 @@ communication between multiple users.
 - LiveKit
 - SFU (Selective Forwarding Unit)
 
+### Database
+- Mysql
+- Redis
+
 ### DevOps & Infrastructure
 - Docker
 - Caddy
@@ -58,6 +62,38 @@ communication between multiple users.
 ```bash
 docker compose up --build
 ```
+
+## Architecture
+
+### API Request Flow
+
+```text
+Browser
+   │
+   │ HTTPS
+   ▼
+Caddy (app.domain)
+   │
+   ▼
+Next.js BFF
+   │
+   │ Axios
+   ▼
+Caddy (api.domain)
+   │
+   ▼
+Laravel API
+   │
+   ├──→ Eloquent ORM ──→ MySQL
+   │
+   └──→ Redis
+```
+
+### Chat Communication
+
+### Video Communication
+
+
 
 ## Tech Stack Explanation
 
@@ -113,6 +149,35 @@ operations triggered them during a request lifecycle.
 **Tweakcn** is used to customize and manage the application's visual theme and design system.
 
 **DiceBear** is used to generate consistent user avatars for users who do not have a custom profile image.
+
+### MySQL
+
+The application requires persistent storage for data such as users,
+chats, messages, and other application records.
+
+I chose MySQL as the primary relational database because it integrates
+well with Laravel and I am familiar with its relational data model
+and SQL-based data management.
+
+MySQL is used to persist application data and maintain relationships
+between the different entities in the system.
+
+### Redis
+
+Some API endpoints require frequently accessed, real-time state that
+does not need to be persisted in the database.
+
+For example, video call room management requires tracking which users
+are currently participating in a room.
+
+I chose Redis as an in-memory data store for this type of temporary
+state. Redis Sets are used to store unique user identifiers, which
+prevents duplicate entries.
+
+By keeping this temporary state in memory, the application can avoid
+unnecessary database queries and reduce database load while providing
+fast access to frequently changing data.
+
 
 
 ## Engineering Decisions
@@ -196,5 +261,5 @@ Additionally, this project gave me an opportunity to gain practical
 experience with Docker and multi-container application setup.
 
 
-
+## Challenges & Solutions
 
