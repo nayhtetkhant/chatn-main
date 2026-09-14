@@ -202,6 +202,76 @@ Laravel API ──────→ Call Event
 
 ```
 
+***call Invitation***
+
+    ```text
+        Caller
+           │
+           ▼
+        CallView
+           │
+           │ Check user availability
+           ▼
+        Invite User
+           │
+           ▼
+        TanStack Query Mutation
+           │
+           ▼
+        Next.js BFF
+           │
+           ▼
+        Laravel API
+           │
+           ▼
+        Laravel Reverb
+           │
+           ▼
+        Call Invitation Event
+           │
+           ▼
+        Callee Browser
+           │
+           │ Accept Invitation
+           ▼
+        Retrieve Call Room Data
+           │
+           ▼
+        Zustand Store
+           │
+           ▼
+        Redirect to CallView
+
+***call view component***
+
+          CallView
+         │
+         ▼
+      Get Room Name & Token
+      from Zustand
+         │
+         ▼
+      Create LiveKit Room
+         │
+         ▼
+      Initialize LiveKit Connection
+         │
+         ▼
+      Connect to LiveKit Server
+         │
+         ▼
+      Publish Local Media
+         ├── Audio Track
+         └── Video Track
+         │
+         ▼
+      Subscribe to Remote Participants
+         │
+         ▼
+      Receive Remote Media Tracks
+         │
+         ▼
+      Render Tracks in UI
 
 ## Tech Stack Explanation
 
