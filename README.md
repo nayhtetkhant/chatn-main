@@ -44,14 +44,8 @@ communication between multiple users.
 
 ```bash
 docker compose up --build
+```
 
-
-
-### Tech Stack Explanation
-
-We rewrote your explanations into professional README language:
-
-```md
 ## Tech Stack Explanation
 
 ### React
