@@ -131,6 +131,7 @@ With an SFU, each participant joins a room and publishes their audio/video track
 Each client publishes its own media to the SFU once, while subscribing to the media tracks it needs from the room.
 
 This provides a more suitable architecture for multi-user conferencing by reducing the number of direct peer connections maintained by each client.
+
 ### Why BFF?
 
 The BFF layer provides a controlled API boundary between the browser
@@ -140,10 +141,60 @@ Instead of communicating directly with the Laravel API, the browser
 sends requests to the Next.js BFF layer, which then communicates with
 the Laravel backend.
 
-```text
+```
 Browser
    ↓
 Next.js BFF Endpoint
    ↓
 Laravel API Endpoint
 ```
+
+### Why Reverb?
+
+The application requires a WebSocket server for real-time
+communication within the Laravel and Docker ecosystem.
+
+I chose Laravel Reverb because it can be self-hosted and integrates
+directly with Laravel, making it suitable for a containerized
+environment.
+
+Reverb also works with Laravel Echo on the client side, providing a
+straightforward way to subscribe to channels and listen for
+real-time events from the Laravel backend.
+
+Compared with using a hosted WebSocket service such as Pusher,
+self-hosting Reverb gives me more control over the WebSocket
+infrastructure and allows the service to run within my own Docker
+environment.
+
+### Why Caddy?
+
+The application requires HTTPS in the local development environment
+because browser-based media access requires a secure context.
+
+I chose Caddy as the reverse proxy instead of Nginx because it
+provides a simpler configuration and makes it easier to set up
+HTTPS for local development.
+
+Caddy handles reverse proxying and TLS configuration, allowing the
+application services to be accessed through HTTPS during local
+development.
+
+### Why Docker?
+
+The application uses a self-hosted LiveKit SFU for video
+conferencing, so I needed a consistent environment for running
+LiveKit and the other application services.
+
+I chose Docker to containerize the application services and simplify
+the setup of the development environment.
+
+Docker also helps reduce environment-related issues by providing
+isolated and reproducible environments across different machines.
+
+Additionally, this project gave me an opportunity to gain practical
+experience with Docker and multi-container application setup.
+
+
+
+
